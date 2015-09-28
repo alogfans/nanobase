@@ -8,9 +8,11 @@ import com.alogfans.nanobase.rpc.server.RpcServer;
  */
 public class ServerDrive {
     public static void main(String[] args) {
+        Provider provider = new Provider()
+                .setInterfaceClazz(IEcho.class)
+                .setInstance(new EchoImpl());
         RpcServer rpcServer = new RpcServer(8080);
-        rpcServer.addProvider(
-                new Provider().setInterfaceClazz(IEcho.class).setInstance(new EchoImpl()));
+        rpcServer.addProvider(provider);
 
         try {
             rpcServer.run();

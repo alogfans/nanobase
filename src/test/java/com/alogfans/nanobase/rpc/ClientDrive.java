@@ -8,8 +8,9 @@ import com.alogfans.nanobase.rpc.client.RpcClient;
 public class ClientDrive {
     public static void main(String[] args) {
         RpcClient rpcClient = new RpcClient("localhost", 8080);
-        IEcho invoker = (IEcho)
-                rpcClient.createInvoker().setInterfaceClazz(IEcho.class).getInstance();
+        IEcho invoker = (IEcho) rpcClient.createInvoker()
+                        .setInterfaceClazz(IEcho.class)
+                        .getInstance();
 
         try {
             rpcClient.run();
