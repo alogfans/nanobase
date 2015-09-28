@@ -3,7 +3,8 @@ package com.alogfans.nanobase.rpc.serialize;
 import java.io.*;
 
 /**
- * Java Built-in Serializer. All static methods.
+ * Java Built-in Serializer. All are static methods.
+ *
  * Created by Alogfans on 2015/9/27.
  */
 public class BuiltInSerializer {

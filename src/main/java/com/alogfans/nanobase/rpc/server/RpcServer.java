@@ -23,7 +23,12 @@ public class RpcServer {
     private Map<String, Provider> dispatchReferences;
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
+    private boolean backgroundProcess = false;
 
+    /**
+     * Create rpcServer object
+     * @param port tcp port number for servicing.
+     */
     public RpcServer(int port) {
         this.port = port;
         this.dispatchReferences = new HashMap<String, Provider>();
@@ -31,12 +36,26 @@ public class RpcServer {
         this.workerGroup = new NioEventLoopGroup();
     }
 
+    /**
+     * Add new provider so that rpcServerHandler could dispatch the income request
+     * packet to proper provider for reality invocations.
+     *
+     * @param provider the provider reference
+     * @return itself.
+     */
     public RpcServer addProvider(Provider provider) {
         dispatchReferences.put(provider.getInterfaceClazzName(), provider);
         return this;
     }
 
+    /**
+     * Start background process. Will not blocked!
+     * @throws Exception
+     */
     public void run() throws Exception {
+        if (backgroundProcess)
+            return;
+
         ServerBootstrap bootstrap = new ServerBootstrap();
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
@@ -54,11 +73,17 @@ public class RpcServer {
         ChannelFuture future = bootstrap.bind(port).sync();
         channel = future.channel();
         channel.closeFuture().sync();
+        backgroundProcess = true;
     }
 
+    /**
+     * Stop background process.
+     */
     public void stop() {
-        workerGroup.shutdownGracefully();
-        bossGroup.shutdownGracefully();
+        if (backgroundProcess) {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
     }
 
 }

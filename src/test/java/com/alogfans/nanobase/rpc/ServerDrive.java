@@ -16,6 +16,8 @@ public class ServerDrive {
             rpcServer.run();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            rpcServer.stop();
         }
     }
 }

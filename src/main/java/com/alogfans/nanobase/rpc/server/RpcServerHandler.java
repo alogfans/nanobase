@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by Alogfans on 2015/9/27.
  */
 public class RpcServerHandler extends ChannelInboundHandlerAdapter {
-    private Map<String, Provider> dispatchReferences;
+    private final Map<String, Provider> dispatchReferences;
 
     public RpcServerHandler(Map<String, Provider> dispatchReferences) {
         this.dispatchReferences = dispatchReferences;
@@ -38,5 +38,6 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         ctx.close().sync();
+        cause.printStackTrace();
     }
 }

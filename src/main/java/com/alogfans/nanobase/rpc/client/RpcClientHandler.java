@@ -6,8 +6,11 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 /**
+ * RpcClientHandler: Binding to responses.
+ *
  * Created by Alogfans on 2015/9/27.
  */
 public class RpcClientHandler extends ChannelInboundHandlerAdapter {
@@ -30,5 +33,11 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter {
             dispatchReferences.get(rpcResponse.getUid()).notifyResponse(rpcResponse);
             dispatchReferences.remove(rpcResponse.getUid());
         }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        ctx.close().sync();
+        cause.printStackTrace();
     }
 }

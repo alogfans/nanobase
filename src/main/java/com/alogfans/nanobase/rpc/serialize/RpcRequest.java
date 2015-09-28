@@ -12,7 +12,7 @@ public class RpcRequest implements Serializable {
     private String uid;             // identify the request in response packet.
     private String className;       // the Java class expected to be invoked.
     private String methodName;      // the method name (allows overloading).
-    private String[] parameterTypes;
+    private String[] parameterTypes;// parameter type in string format.
     private Object[] parameters;    // transfers variable parameters, also supports overload.
 
     public RpcRequest() {

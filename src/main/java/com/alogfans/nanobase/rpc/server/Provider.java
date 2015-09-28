@@ -8,7 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Provider
+ * Provider: could be multiple in single client. But DO NOT using same
+ * rpc interface class, otherwise may occur some bugs.
  *
  * Created by Alogfans on 2015/9/28.
  */
@@ -30,6 +31,12 @@ public class Provider {
         return interfaceClazz.getName();
     }
 
+    /**
+     * Do the reality invocation operation on specified Rpc request data, and transfer
+     * back the execution result (and exceptions, if existed).
+     * @param rpcRequest the request packet
+     * @return the response packet.
+     */
     public RpcResponse invoke(RpcRequest rpcRequest) {
         RpcResponse rpcResponse = new RpcResponse();
         rpcResponse.setUid(rpcRequest.getUid());

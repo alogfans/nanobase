@@ -5,7 +5,6 @@ package com.alogfans.nanobase.rpc;
  */
 public class EchoImpl implements IEcho {
     public String echo(String in) throws Exception {
-        // throw new Exception("Hello world!");
         return in;
     }
 }
