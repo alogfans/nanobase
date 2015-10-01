@@ -72,8 +72,17 @@ public class RpcServer {
 
         ChannelFuture future = bootstrap.bind(port).sync();
         channel = future.channel();
-        channel.closeFuture().sync();
         backgroundProcess = true;
+    }
+
+    /**
+     * Will block the main thread until the channel is closed.
+     * @throws Exception
+     */
+    public void join() throws Exception {
+        if (backgroundProcess) {
+            channel.closeFuture().sync();
+        }
     }
 
     /**
@@ -84,6 +93,7 @@ public class RpcServer {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
+        backgroundProcess = false;
     }
 
 }

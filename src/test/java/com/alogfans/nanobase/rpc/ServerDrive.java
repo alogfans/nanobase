@@ -16,6 +16,9 @@ public class ServerDrive {
 
         try {
             rpcServer.run();
+            Thread.sleep(3000);
+            System.out.print("Rpc is working in background.");
+            rpcServer.join();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

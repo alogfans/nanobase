@@ -1,11 +1,16 @@
--------------------------------------------------------------------------------
-NanoBase: A persistent, fault-tolerant, high-performance key/value store
-Version 0.0.1 (Alpha -Inf)
--------------------------------------------------------------------------------
+# NanoBase
+> A persistent, fault-tolerant, high-performance key/value store
 
-The MIT License (MIT)
+## Description
+This is one implementation of key/value store system, which included simple synchronized remote 
+procedure call (RPC) subsystem, and a full example of typical mechanisms for most distributed 
+systems, such as Paxos system, disk persistent and performance requirements.
 
-Copyright (C) 2015 Ren Feng
+The overall design refers to some well-known papers in system area.
+
+## The MIT License (MIT)
+```
+Copyright (C) 2015 Ren Feng.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -23,4 +28,4 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
+```
