@@ -14,10 +14,10 @@ public class ClientDrive {
 
         try {
             rpcClient.run();
-            String[] strings = new String[10000];
-            for (int i = 0; i < 10000; ++i)
+            String[] strings = new String[100];
+            for (int i = 0; i < 100; ++i)
                 strings[i] = invoker.echo(String.format("%d", i));
-            for (int i = 0; i < 10000; ++i)
+            for (int i = 0; i < 100; ++i)
                 if (Integer.parseInt(strings[i]) != i )
                     System.out.print("fuck you!\n");
             // There should be none f**k you displayed in screen, otherwise the programmer
