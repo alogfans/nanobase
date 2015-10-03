@@ -33,7 +33,7 @@ public class PaxosRoutine implements Paxos {
             this.doneInstances[i] = -1;  // nothing is done
 
         this.lock = new ReentrantLock();
-        this.rpcServer = new RpcServer(PAXOS_RPC_PORT);
+        this.rpcServer = new RpcServer(PAXOS_RPC_PORT + current);
         initializeRpcServer();
         this.instanceMap = new HashMap<Integer, PaxosInstance>();
     }
@@ -154,7 +154,7 @@ public class PaxosRoutine implements Paxos {
                 paxosReply = prepare(paxosArgs);
             else {
                 // Via Rpc function. Note that it's short connection
-                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT);
+                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT + i);
                 Paxos handler = (Paxos) rpcClient.createInvoker()
                         .setInterfaceClazz(Paxos.class)
                         .getInstance();
@@ -206,7 +206,7 @@ public class PaxosRoutine implements Paxos {
                 reply = accept(paxosArgs);
             else {
                 // Via Rpc function. Note that it's short connection
-                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT);
+                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT + i);
                 Paxos handler = (Paxos) rpcClient.createInvoker()
                         .setInterfaceClazz(Paxos.class)
                         .getInstance();
@@ -239,7 +239,7 @@ public class PaxosRoutine implements Paxos {
                 broadcast(paxosArgs);
             else {
                 // Via Rpc function. Note that it's short connection
-                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT);
+                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT + i);
                 Paxos handler = (Paxos) rpcClient.createInvoker()
                         .setInterfaceClazz(Paxos.class)
                         .getInstance();
