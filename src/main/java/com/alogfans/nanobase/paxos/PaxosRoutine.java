@@ -262,6 +262,7 @@ public class PaxosRoutine implements Paxos {
             if (!doAccept(instanceId, finalProposal))
                 continue;
             doBroadcast(instanceId, finalProposal);
+            // System.out.printf("All fun, done!");
             return;
         }
     }
@@ -342,6 +343,10 @@ public class PaxosRoutine implements Paxos {
 
         lock.unlock();
         return status;
+    }
+
+    public void shutdown() {
+        rpcServer.stop();
     }
 }
 

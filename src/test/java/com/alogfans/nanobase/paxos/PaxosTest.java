@@ -17,8 +17,11 @@ public class PaxosTest {
         }
 
         paxosRoutines[0].start(0, "Hello World!");
-        //Thread.sleep(1000);
-        //System.out.print(paxosRoutines[1].getStatus(0).accepted);
-        //System.out.print(paxosRoutines[2].getStatus(0).accepted);
+        Thread.sleep(1000);
+        System.out.print(paxosRoutines[1].getStatus(0).accepted);
+        System.out.print(paxosRoutines[2].getStatus(0).accepted);
+
+        for (int i = 0; i < 3; i++)
+            paxosRoutines[i].shutdown();
     }
 }

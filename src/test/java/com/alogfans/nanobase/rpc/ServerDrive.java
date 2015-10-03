@@ -8,21 +8,6 @@ import com.alogfans.nanobase.rpc.server.RpcServer;
  */
 public class ServerDrive {
     public static void main(String[] args) {
-        Provider provider = new Provider()
-                .setInterfaceClazz(IEcho.class)
-                .setInstance(new EchoImpl());
-        RpcServer rpcServer = new RpcServer(8080);
-        rpcServer.addProvider(provider);
-
-        try {
-            rpcServer.run();
-            Thread.sleep(30000);
-            System.out.print("Rpc is working in background.");
-            rpcServer.join();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            rpcServer.stop();
-        }
+        new EchoImpl().execute();
     }
 }
