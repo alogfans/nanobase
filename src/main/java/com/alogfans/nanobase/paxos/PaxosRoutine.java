@@ -4,9 +4,9 @@ import com.alogfans.nanobase.paxos.messages.PaxosArgs;
 import com.alogfans.nanobase.paxos.messages.PaxosReply;
 import com.alogfans.nanobase.paxos.messages.Proposal;
 import com.alogfans.nanobase.rpc.client.RpcClient;
+import com.alogfans.nanobase.rpc.server.Provider;
 import com.alogfans.nanobase.rpc.server.RpcServer;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -22,18 +22,19 @@ public class PaxosRoutine implements Paxos {
     private RpcServer rpcServer;        // will working since initialization.
     private String[] peers;
     private int current;                // index to current peer
-    private int[] doneSessions;         // session that have done with peer list
+    private int[] doneInstances;        // instances that have done with peer list
     private Map<Integer, PaxosInstance> instanceMap;
 
     public PaxosRoutine(String[] peers, int current) {
         this.peers = peers;
         this.current = current;
-        this.doneSessions = new int[peers.length];
+        this.doneInstances = new int[peers.length];
         for (int i = 0; i < peers.length; i++)
-            this.doneSessions[i] = -1;  // nothing is done
+            this.doneInstances[i] = -1;  // nothing is done
 
         this.lock = new ReentrantLock();
         this.rpcServer = new RpcServer(PAXOS_RPC_PORT);
+        initializeRpcServer();
         this.instanceMap = new HashMap<Integer, PaxosInstance>();
     }
 
@@ -51,6 +52,18 @@ public class PaxosRoutine implements Paxos {
         public boolean accepted;        // whether completed stage two?
         public int prepared;            // the last prepared session
         public Proposal proposal;       // last accepted proposal
+    }
+
+    private void initializeRpcServer() {
+        Provider provider = new Provider()
+                .setInterfaceClazz(Paxos.class)
+                .setInstance(this);
+        rpcServer.addProvider(provider);
+        try {
+            rpcServer.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // The following functions are rpc routines, DO NOT DIRECTLY USE THEM!
@@ -103,8 +116,23 @@ public class PaxosRoutine implements Paxos {
         return reply;
     }
 
-    public void commit(PaxosArgs paxosArgs) {
+    public void broadcast(PaxosArgs paxosArgs) {
+        lock.lock();
+        int instanceId = paxosArgs.instanceId;
+        if (!instanceMap.containsKey(instanceId)) {
+            PaxosInstance newInstance = new PaxosInstance(instanceId);
+            instanceMap.put(instanceId, newInstance);
+        }
 
+        // update local storage
+        instanceMap.get(instanceId).proposal.sessionId = paxosArgs.sessionId;
+        instanceMap.get(instanceId).proposal.value = paxosArgs.value;
+        instanceMap.get(instanceId).accepted = true;
+
+        if (paxosArgs.invokerIndex != current)
+            doneInstances[paxosArgs.invokerIndex] = paxosArgs.doneCurrent;
+
+        lock.unlock();
     }
 
     // the following functions are for final users.
@@ -116,6 +144,9 @@ public class PaxosRoutine implements Paxos {
         PaxosArgs paxosArgs = new PaxosArgs();
         paxosArgs.instanceId = instanceId;
         paxosArgs.sessionId = sessionId;
+        paxosArgs.value = value;
+        paxosArgs.invokerIndex = current;
+        paxosArgs.doneCurrent = doneInstances[current];
 
         for (int i = 0; i < peers.length; i++) {
             PaxosReply paxosReply = null;
@@ -158,9 +189,159 @@ public class PaxosRoutine implements Paxos {
         return false;
     }
 
+    public boolean doAccept(int instanceId, Proposal finalProposal) {
+        int acknowledged = 0;
+
+        PaxosArgs paxosArgs = new PaxosArgs();
+        paxosArgs.instanceId = instanceId;
+        paxosArgs.sessionId = finalProposal.sessionId;
+        paxosArgs.value = finalProposal.value;
+        paxosArgs.invokerIndex = current;
+        paxosArgs.doneCurrent = doneInstances[current];
+
+        for (int i = 0; i < peers.length; i++) {
+            boolean reply = false;
+
+            if (i == current)
+                reply = accept(paxosArgs);
+            else {
+                // Via Rpc function. Note that it's short connection
+                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT);
+                Paxos handler = (Paxos) rpcClient.createInvoker()
+                        .setInterfaceClazz(Paxos.class)
+                        .getInstance();
+                try {
+                    rpcClient.run();
+                    reply = handler.accept(paxosArgs);
+                    rpcClient.stop();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (reply) {
+                acknowledged++;
+            }
+        }
+        return (acknowledged > peers.length / 2);
+    }
+
+    public void doBroadcast(int instanceId, Proposal finalProposal) {
+        PaxosArgs paxosArgs = new PaxosArgs();
+        paxosArgs.instanceId = instanceId;
+        paxosArgs.sessionId = finalProposal.sessionId;
+        paxosArgs.value = finalProposal.value;
+        paxosArgs.invokerIndex = current;
+        paxosArgs.doneCurrent = doneInstances[current];
+
+        for (int i = 0; i < peers.length; i++) {
+            if (i == current)
+                broadcast(paxosArgs);
+            else {
+                // Via Rpc function. Note that it's short connection
+                RpcClient rpcClient = new RpcClient(peers[i], PAXOS_RPC_PORT);
+                Paxos handler = (Paxos) rpcClient.createInvoker()
+                        .setInterfaceClazz(Paxos.class)
+                        .getInstance();
+                try {
+                    rpcClient.run();
+                    handler.broadcast(paxosArgs);
+                    rpcClient.stop();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public void proposer(int instanceId, Object value) {
+        while (true) {
+            Proposal finalProposal = new Proposal();
+            if (!doPrepare(instanceId, value, finalProposal))
+                continue;
+            if (!doAccept(instanceId, finalProposal))
+                continue;
+            doBroadcast(instanceId, finalProposal);
+            return;
+        }
+    }
+
     private int generateSessionId() {
         // support 256 agents currently
         int timestamp = (int) (System.nanoTime() & 0x00ffffff) >> 8;
         return timestamp + current;
     }
+
+    // The following APIS are available to end user
+    public void start(final int instanceId, final Object value) {
+        new Thread(new Runnable() {
+            public void run() {
+                if (instanceId < getMinimalKnownDoneInstance())
+                    return;
+                proposer(instanceId, value);
+            }
+        }).start();
+    }
+
+    public int getMinimalKnownDoneInstance() {
+        lock.lock();
+        int minimal = 0;
+        for (int i = 0; i < doneInstances.length; i++) {
+            if (minimal > doneInstances[i])
+                minimal = doneInstances[i];
+        }
+
+        for (int instanceId : instanceMap.keySet()) {
+            if (instanceId <= minimal && instanceMap.get(instanceId).accepted) {
+                instanceMap.remove(instanceId);
+            }
+        }
+
+        lock.unlock();
+        return minimal + 1;
+    }
+
+    public int getMaximalKnownDoneInstance() {
+        int largest = 0;
+        for (int i = 0; i < doneInstances.length; i++) {
+            if (largest < doneInstances[i])
+                largest = doneInstances[i];
+        }
+        return largest;
+    }
+
+    public void done(int instanceId) {
+        if (doneInstances[current] < instanceId)
+            doneInstances[current] = instanceId;
+    }
+
+    public class Status {
+        public Status(boolean accepted, Object value) {
+            this.accepted = accepted;
+            this.value = value;
+        }
+
+        public boolean accepted;
+        public Object value;
+    }
+
+    public Status getStatus(int instanceId) {
+        Status status = new Status(false, null);
+
+        if (instanceId < getMinimalKnownDoneInstance())
+            return status;
+        lock.lock();
+
+        if (!instanceMap.containsKey(instanceId)) {
+            lock.unlock();
+            return status;
+        }
+
+        status.accepted = instanceMap.get(instanceId).accepted;
+        status.value = instanceMap.get(instanceId).proposal.value;
+
+        lock.unlock();
+        return status;
+    }
 }
+

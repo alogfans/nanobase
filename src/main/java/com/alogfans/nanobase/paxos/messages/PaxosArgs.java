@@ -9,4 +9,7 @@ public class PaxosArgs {
     public int instanceId;
     public int sessionId;
     public Object value;
+
+    public int invokerIndex;
+    public int doneCurrent;
 }

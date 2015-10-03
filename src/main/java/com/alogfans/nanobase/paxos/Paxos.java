@@ -39,6 +39,6 @@ public interface Paxos {
      *                  and session id. the value argument stores the expected
      *                  value.
      */
-    void commit(PaxosArgs paxosArgs);
+    void broadcast(PaxosArgs paxosArgs);
 
 }
