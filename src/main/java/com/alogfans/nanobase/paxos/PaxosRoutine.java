@@ -304,9 +304,10 @@ public class PaxosRoutine implements Paxos {
 
     public int getMaximalKnownDoneInstance() {
         int largest = 0;
-        for (int i = 0; i < doneInstances.length; i++) {
-            if (largest < doneInstances[i])
-                largest = doneInstances[i];
+        for (int instanceId : instanceMap.keySet()) {
+            if (largest < instanceId) {
+                largest = instanceId;
+            }
         }
         return largest;
     }
