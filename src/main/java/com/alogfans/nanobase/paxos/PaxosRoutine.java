@@ -9,6 +9,7 @@ import com.alogfans.nanobase.rpc.server.RpcServer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -35,7 +36,7 @@ public class PaxosRoutine implements Paxos {
         this.lock = new ReentrantLock();
         this.rpcServer = new RpcServer(PAXOS_RPC_PORT + current);
         initializeRpcServer();
-        this.instanceMap = new HashMap<Integer, PaxosInstance>();
+        this.instanceMap = new ConcurrentHashMap<Integer, PaxosInstance>();
     }
 
     private class PaxosInstance {
