@@ -7,7 +7,6 @@ import com.alogfans.nanobase.rpc.client.RpcClient;
 import com.alogfans.nanobase.rpc.server.Provider;
 import com.alogfans.nanobase.rpc.server.RpcServer;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -278,14 +277,14 @@ public class PaxosRoutine implements Paxos {
     public void start(final int instanceId, final Object value) {
         new Thread(new Runnable() {
             public void run() {
-                if (instanceId < getMinimalKnownDoneInstance())
+                if (instanceId < getMin())
                     return;
                 proposer(instanceId, value);
             }
         }).start();
     }
 
-    public int getMinimalKnownDoneInstance() {
+    public int getMin() {
         lock.lock();
         int minimal = 0;
         for (int i = 0; i < doneInstances.length; i++) {
@@ -303,7 +302,7 @@ public class PaxosRoutine implements Paxos {
         return minimal + 1;
     }
 
-    public int getMaximalKnownDoneInstance() {
+    public int getMax() {
         int largest = 0;
         for (int instanceId : instanceMap.keySet()) {
             if (largest < instanceId) {
@@ -331,7 +330,7 @@ public class PaxosRoutine implements Paxos {
     public Status getStatus(int instanceId) {
         Status status = new Status(false, null);
 
-        if (instanceId < getMinimalKnownDoneInstance())
+        if (instanceId < getMin())
             return status;
         lock.lock();
 

@@ -82,7 +82,7 @@ public class TestPaxosDeaf {
     @Test
     public void testForgotten() {
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            Assert.assertTrue(paxosRoutines[i].getMinimalKnownDoneInstance() <= 0);
+            Assert.assertTrue(paxosRoutines[i].getMin() <= 0);
         }
 
         paxosRoutines[0].start(0, "00");
@@ -93,12 +93,12 @@ public class TestPaxosDeaf {
 
         validate(0);
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            Assert.assertTrue(paxosRoutines[i].getMinimalKnownDoneInstance() == 0);
+            Assert.assertTrue(paxosRoutines[i].getMin() == 0);
         }
 
         validate(1);
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            Assert.assertTrue(paxosRoutines[i].getMinimalKnownDoneInstance() == 0);
+            Assert.assertTrue(paxosRoutines[i].getMin() == 0);
         }
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
@@ -117,7 +117,7 @@ public class TestPaxosDeaf {
         for (int t = 0; t < 12; t++) {
             allok = true;
             for (int i = 0; i < MACHINE_COUNT; i++) {
-                if (paxosRoutines[i].getMinimalKnownDoneInstance() != 1)
+                if (paxosRoutines[i].getMin() != 1)
                     allok = false;
             }
 

@@ -2,11 +2,13 @@
 > A persistent, fault-tolerant, high-performance key/value store
 
 ## Description
-This is one implementation of key/value store system, which included simple synchronized remote 
-procedure call (RPC) subsystem, and a full example of typical mechanisms for most distributed 
-systems, such as Paxos system, disk persistent and performance requirements.
+It's the simplest implementation of a typical distributed system. Several subsystems were designed to 
+make it work properly. The store system supported `Comparable` key types and various value types
+(however, blob is not implemented currently, so storing small-scale data is accepted). 
 
-The overall design refers to some well-known papers in system area.
+The project is written in IntelliJ IDEA 14.1, using the built-in **Maven** controlling system. As the file
+`pom.xml` assigned, only **netty 4.x** (for low-level socket I/O) and **junit 4.12** (for unit tests) are needed.
+Other components are written by my hand.
 
 ## The MIT License (MIT)
 ```

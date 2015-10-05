@@ -102,7 +102,7 @@ public class TestPaxosSimple {
         validate(5);
         validate(4);
         validate(3);
-        // System.out.println(paxosRoutines[0].getMaximalKnownDoneInstance());
-        Assert.assertTrue(paxosRoutines[0].getMaximalKnownDoneInstance() == 7);
+        // System.out.println(paxosRoutines[0].getMax());
+        Assert.assertTrue(paxosRoutines[0].getMax() == 7);
     }
 }
