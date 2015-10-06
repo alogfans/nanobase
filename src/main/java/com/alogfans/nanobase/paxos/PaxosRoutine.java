@@ -8,6 +8,7 @@ import com.alogfans.nanobase.rpc.server.Provider;
 import com.alogfans.nanobase.rpc.server.RpcServer;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,6 +25,9 @@ public class PaxosRoutine implements Paxos {
     private int current;                // index to current peer
     private int[] doneInstances;        // instances that have done with peer list
     private Map<Integer, PaxosInstance> instanceMap;
+
+    // For Single-PC debug only
+    // public boolean reliable = true;
 
     public PaxosRoutine(String[] peers, int current) {
         this.peers = peers;
@@ -59,11 +63,37 @@ public class PaxosRoutine implements Paxos {
                 .setInterfaceClazz(Paxos.class)
                 .setInstance(this);
         rpcServer.addProvider(provider);
+
         try {
             rpcServer.run();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        /*
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    rpcServer.run();
+                    while (true) {
+                        if (!reliable) {
+                            Random random = new Random();
+                            if (random.nextInt(Integer.MAX_VALUE) < Integer.MAX_VALUE / 100) {
+                                // shut down it by force
+                                Thread.currentThread().stop();
+                                break;
+                            }
+                        }
+                        Thread.sleep(500);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    // rpcServer.stop();
+                }
+            }
+        }).start();
+        */
     }
 
     // The following functions are rpc routines, DO NOT DIRECTLY USE THEM!
@@ -346,7 +376,7 @@ public class PaxosRoutine implements Paxos {
         return status;
     }
 
-    public void shutdown() {
+    public void stop() {
         rpcServer.stop();
     }
 }

@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test cases for Paxos components.
+ * Test cases for Paxos. Modified by MIT 6.824 test code.
  *
  * Created by Alogfans on 2015/10/3.
  */
@@ -33,7 +33,7 @@ public class TestPaxosSimple {
     @After
     public void teardown() {
         for (int i = 0; i < MACHINE_COUNT; i++)
-            paxosRoutines[i].shutdown();
+            paxosRoutines[i].stop();
     }
 
     public void wait(int timeout) {
