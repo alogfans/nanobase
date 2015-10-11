@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test cases for Paxos. Modified by MIT 6.824 test code.
+ * Test cases for PaxosRpc. Modified by MIT 6.824 test code.
  *
  * Created by Alogfans on 2015/10/4.
  */
@@ -14,19 +14,19 @@ public class TestPaxosDeaf {
     private final int MACHINE_COUNT = 6;
 
     private String[] peers = null;
-    private PaxosRoutine[] paxosRoutines = null;
+    private Paxos[] paxosRoutines = null;
 
     @Before
     public void setup() {
         peers = new String[MACHINE_COUNT];
-        paxosRoutines = new PaxosRoutine[MACHINE_COUNT];
+        paxosRoutines = new Paxos[MACHINE_COUNT];
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
             peers[i] = "localhost";
         }
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            paxosRoutines[i] = new PaxosRoutine(peers, i);
+            paxosRoutines[i] = new Paxos(peers, i);
         }
     }
 

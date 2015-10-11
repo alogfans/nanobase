@@ -33,7 +33,7 @@ public class Provider {
 
     /**
      * Do the reality invocation operation on specified Rpc request data, and transfer
-     * back the execution result (and exceptions, if existed).
+     * back the execution result (and exceptions, if status).
      * @param rpcRequest the request packet
      * @return the response packet.
      */

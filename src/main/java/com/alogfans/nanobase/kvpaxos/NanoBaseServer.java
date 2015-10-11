@@ -1,0 +1,163 @@
+package com.alogfans.nanobase.kvpaxos;
+
+import com.alogfans.nanobase.engine.Engine;
+import com.alogfans.nanobase.engine.HashMapEngine;
+import com.alogfans.nanobase.paxos.Paxos;
+import com.alogfans.nanobase.rpc.server.Provider;
+import com.alogfans.nanobase.rpc.server.RpcServer;
+
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ * Created by Alogfans on 2015/10/11.
+ */
+public class NanoBaseServer implements NanoBaseServerRpc {
+    private ReentrantLock lock;         // for synchronous
+    private RpcServer rpcServer;        // will working since initialization.
+    private Paxos paxos;
+
+    private Engine engineInstance;      // maintain the own key/value db
+    private Engine lastOperationUUID;
+    private Engine lastOperation;       // for each peer, maintain last operation invoked
+    private int completedOperationId;   // all operations before it are completely sync.
+
+    public NanoBaseServer(String[] peers, int[] paxosPorts, int servicePort, int current) {
+        this.lock = new ReentrantLock();
+        this.rpcServer = new RpcServer(servicePort);
+        this.paxos = new Paxos(peers, paxosPorts, current);
+        this.engineInstance = new HashMapEngine();
+        this.lastOperationUUID = new HashMapEngine();
+        this.lastOperation = new HashMapEngine();
+
+        initializeRpcServer();
+    }
+
+    private void initializeRpcServer() {
+        Provider provider = new Provider()
+                .setInterfaceClazz(NanoBaseServerRpc.class)
+                .setInstance(this);
+        rpcServer.addProvider(provider);
+
+        try {
+            rpcServer.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // The following implemented RPC interface
+    public KvReply get(String key, String uuid, String clientId) {
+        KvReply result;
+        lock.lock();
+        result = perform(
+                new KvOperation(Command.GetOperation, key, null, false, uuid, clientId));
+
+        lock.unlock();
+        return result;
+    }
+
+    public KvReply put(String key, String value, boolean needPreviousValue, String uuid, String clientId) {
+        KvReply result;
+        lock.lock();
+        result = perform(new KvOperation
+                (Command.PutOperation, key, value, needPreviousValue, uuid, clientId));
+
+        lock.unlock();
+        return result;
+    }
+
+    private enum Command {
+        GetOperation, PutOperation
+    }
+
+    private class KvOperation {
+        public KvOperation(Command command, String key, String value,
+                           boolean needPreviousValue, String uuid, String clientId) {
+            this.command = command;
+            this.key = key;
+            this.value = value;
+            this.needPreviousValue = needPreviousValue;
+            this.uuid = uuid;
+            this.clientId = clientId;
+        }
+
+        public Command command;
+        public String key;
+        public String value;
+        public boolean needPreviousValue;
+        public String uuid;
+        public String clientId;
+    }
+
+    private KvReply perform(KvOperation operation) {
+        final int MAX_ITERATIONS = 10000;
+        KvReply reply = new KvReply();
+        for (int i = 0; i < MAX_ITERATIONS; i++) {
+            // So it have been processed yet, do not advance to make
+            // at-most-once semantic
+            if (lastOperationUUID.get(operation.clientId).compareTo(operation.uuid) == 0) {
+                reply.status = KvReply.Status.Success;
+                reply.payload = lastOperation.get(operation.clientId);
+                return reply;
+            }
+
+            int instanceId = completedOperationId + 1;
+            Paxos.Status status = paxos.getStatus(instanceId);
+            KvOperation result = null;
+
+            if (status.accepted) {
+                result = (KvOperation) status.value;
+            } else {
+                paxos.start(instanceId, operation);
+                result = waitAgreement(instanceId);
+                // If empty, please skip the apply operation
+                if (result == null)
+                    continue;
+            }
+            // Apply (result, instanceId);
+            apply(instanceId, result);
+            if (operation.uuid.compareTo(result.uuid) == 0) {
+                reply.status = KvReply.Status.Success;
+                reply.payload = lastOperation.get(operation.clientId);
+                return reply;
+            }
+        }
+        reply.status = KvReply.Status.InternalError;
+        return reply;
+    }
+
+    private KvOperation waitAgreement(int instanceId) {
+        int timeout = 10;
+        while (timeout < 10 * 1000) {
+            Paxos.Status status = paxos.getStatus(instanceId);
+            if (status.accepted)
+                return (KvOperation) status.value;
+
+            try {
+                Thread.sleep(timeout);
+            } catch (InterruptedException e) {
+                // Do nothing
+            }
+
+            timeout *= 2;
+        }
+        return null;
+    }
+
+    private void apply(int instanceId, KvOperation operation) {
+        if (engineInstance.containsKey(operation.key)) {
+            lastOperation.put(operation.clientId, engineInstance.get(operation.key));
+        } else {
+            lastOperation.put(operation.clientId, null);
+        }
+
+        lastOperationUUID.put(operation.clientId, operation.uuid);
+
+        if (operation.command == Command.PutOperation) {
+            engineInstance.put(operation.key, operation.value);
+        }
+
+        completedOperationId++;
+        paxos.done(instanceId);
+    }
+}
