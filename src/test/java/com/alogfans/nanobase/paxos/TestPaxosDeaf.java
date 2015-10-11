@@ -14,19 +14,22 @@ public class TestPaxosDeaf {
     private final int MACHINE_COUNT = 6;
 
     private String[] peers = null;
+    private int[] ports = null;
     private Paxos[] paxosRoutines = null;
 
     @Before
     public void setup() {
         peers = new String[MACHINE_COUNT];
+        ports = new int[MACHINE_COUNT];
         paxosRoutines = new Paxos[MACHINE_COUNT];
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
             peers[i] = "localhost";
+            ports[i] = 8000 + i;
         }
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            paxosRoutines[i] = new Paxos(peers, i);
+            paxosRoutines[i] = new Paxos(peers, ports, i);
         }
     }
 
@@ -131,23 +134,4 @@ public class TestPaxosDeaf {
 
         Assert.assertTrue(allok);
     }
-
-    /* Will OK, but all other test cases will affect seriously.
-    @Test
-    public void testManyForgotten() {
-        for (int i = 0; i < MACHINE_COUNT; i++) {
-            paxosRoutines[i].reliable = false;
-            paxosRoutines[i].start(0, 0);
-        }
-        final int INSTANCES = 50;
-        for (int instance = 1; instance < INSTANCES; instance++) {
-            for (int i = 0; i < MACHINE_COUNT; i++)
-                paxosRoutines[i].start(instance, instance * 10 + i);
-        }
-
-        for (int instance = 1; instance < INSTANCES; instance++) {
-            validate(instance);
-        }
-    }
-    */
 }

@@ -25,7 +25,7 @@ public class NanoBaseClient {
         for (int i = 0; i < MAX_ITERATIONS * servers.length; i++) {
             int serverId = i % servers.length;
 
-            RpcClient rpcClient = new RpcClient(servers[serverId], ports[i]);
+            RpcClient rpcClient = new RpcClient(servers[serverId], ports[serverId]);
             KvReply reply = null;
             NanoBaseServerRpc handler = (NanoBaseServerRpc) rpcClient.createInvoker()
                     .setInterfaceClazz(NanoBaseServerRpc.class)
@@ -53,7 +53,7 @@ public class NanoBaseClient {
         for (int i = 0; i < MAX_ITERATIONS * servers.length; i++) {
             int serverId = i % servers.length;
 
-            RpcClient rpcClient = new RpcClient(servers[serverId], ports[i]);
+            RpcClient rpcClient = new RpcClient(servers[serverId], ports[serverId]);
             KvReply reply = null;
             NanoBaseServerRpc handler = (NanoBaseServerRpc) rpcClient.createInvoker()
                     .setInterfaceClazz(NanoBaseServerRpc.class)

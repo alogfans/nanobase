@@ -1,6 +1,6 @@
 package com.alogfans.nanobase.paxos;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,19 +14,22 @@ public class TestPaxosSimple {
     private final int MACHINE_COUNT = 3;
 
     private String[] peers = null;
+    private int[] ports = null;
     private Paxos[] paxosRoutines = null;
 
     @Before
     public void setup() {
         peers = new String[MACHINE_COUNT];
+        ports = new int[MACHINE_COUNT];
         paxosRoutines = new Paxos[MACHINE_COUNT];
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
             peers[i] = "localhost";
+            ports[i] = 8000 + i;
         }
 
         for (int i = 0; i < MACHINE_COUNT; i++) {
-            paxosRoutines[i] = new Paxos(peers, i);
+            paxosRoutines[i] = new Paxos(peers, ports, i);
         }
     }
 
