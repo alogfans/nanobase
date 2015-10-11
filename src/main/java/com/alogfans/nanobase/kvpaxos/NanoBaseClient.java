@@ -60,7 +60,7 @@ public class NanoBaseClient {
                     .getInstance();
             try {
                 rpcClient.run();
-                reply = handler.put(key, value, true, uuid, clientId);
+                reply = handler.put(key, value, uuid, clientId);
                 rpcClient.stop();
             } catch (Exception e) {
                 e.printStackTrace();

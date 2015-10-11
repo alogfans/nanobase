@@ -32,6 +32,11 @@ public class NanoBaseServer implements NanoBaseServerRpc {
         initializeRpcServer();
     }
 
+    public void stop() {
+        rpcServer.stop();
+        paxos.stop();
+    }
+
     private void initializeRpcServer() {
         Provider provider = new Provider()
                 .setInterfaceClazz(NanoBaseServerRpc.class)
@@ -50,43 +55,20 @@ public class NanoBaseServer implements NanoBaseServerRpc {
         KvReply result;
         lock.lock();
         result = perform(
-                new KvOperation(Command.GetOperation, key, null, false, uuid, clientId));
+                new KvOperation(KvOperation.Command.GetOperation, key, null, uuid, clientId));
 
         lock.unlock();
         return result;
     }
 
-    public KvReply put(String key, String value, boolean needPreviousValue, String uuid, String clientId) {
+    public KvReply put(String key, String value, String uuid, String clientId) {
         KvReply result;
         lock.lock();
         result = perform(new KvOperation
-                (Command.PutOperation, key, value, needPreviousValue, uuid, clientId));
+                (KvOperation.Command.PutOperation, key, value, uuid, clientId));
 
         lock.unlock();
         return result;
-    }
-
-    private enum Command {
-        GetOperation, PutOperation
-    }
-
-    private class KvOperation {
-        public KvOperation(Command command, String key, String value,
-                           boolean needPreviousValue, String uuid, String clientId) {
-            this.command = command;
-            this.key = key;
-            this.value = value;
-            this.needPreviousValue = needPreviousValue;
-            this.uuid = uuid;
-            this.clientId = clientId;
-        }
-
-        public Command command;
-        public String key;
-        public String value;
-        public boolean needPreviousValue;
-        public String uuid;
-        public String clientId;
     }
 
     private KvReply perform(KvOperation operation) {
@@ -95,7 +77,8 @@ public class NanoBaseServer implements NanoBaseServerRpc {
         for (int i = 0; i < MAX_ITERATIONS; i++) {
             // So it have been processed yet, do not advance to make
             // at-most-once semantic
-            if (lastOperationUUID.get(operation.clientId).compareTo(operation.uuid) == 0) {
+            String last = lastOperationUUID.get(operation.clientId);
+            if (last != null && last.compareTo(operation.uuid) == 0) {
                 reply.status = KvReply.Status.Success;
                 reply.payload = lastOperation.get(operation.clientId);
                 return reply;
@@ -153,7 +136,7 @@ public class NanoBaseServer implements NanoBaseServerRpc {
 
         lastOperationUUID.put(operation.clientId, operation.uuid);
 
-        if (operation.command == Command.PutOperation) {
+        if (operation.command == KvOperation.Command.PutOperation) {
             engineInstance.put(operation.key, operation.value);
         }
 

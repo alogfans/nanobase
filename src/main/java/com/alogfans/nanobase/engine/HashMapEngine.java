@@ -28,7 +28,9 @@ public class HashMapEngine extends Engine {
 
     @Override
     public String get(String key) {
-        return hashMap.get(key);
+        if (hashMap.containsKey(key))
+            return hashMap.get(key);
+        return null;
     }
 
     @Override

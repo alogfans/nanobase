@@ -6,6 +6,7 @@ import java.io.Serializable;
  * Created by Alogfans on 2015/10/11.
  */
 public class KvReply implements Serializable {
+
     public enum Status {
         Success, KeyNotFound, InternalError
     }

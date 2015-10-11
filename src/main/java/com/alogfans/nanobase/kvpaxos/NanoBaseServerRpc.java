@@ -25,5 +25,5 @@ public interface NanoBaseServerRpc {
      * @return if needPreviousValue is set and there is a previous value, return it. otherwise
      * return null
      */
-    KvReply put(String key, String value, boolean needPreviousValue, String uuid, String clientId);
+    KvReply put(String key, String value, String uuid, String clientId);
 }
